@@ -1,0 +1,7 @@
+{
+  "custom_auth": {
+    "train": 1190,
+    "val": 210,
+    "test": 400
+  }
+}

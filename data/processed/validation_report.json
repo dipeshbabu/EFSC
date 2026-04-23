@@ -1,0 +1,46 @@
+{
+  "ok": true,
+  "num_errors": 0,
+  "errors": [],
+  "summary": {
+    "num_rows": 1800,
+    "by_source": {
+      "custom_auth": 1800
+    },
+    "by_split": {
+      "train": 1190,
+      "val": 210,
+      "test": 400
+    },
+    "by_topic": {
+      "cyber": 360,
+      "other": 1080,
+      "chemistry": 360
+    },
+    "by_variant_type": {
+      "authorized_benign": 360,
+      "hard_benign": 360,
+      "educational_benign": 360,
+      "ambiguous_legitimate": 360,
+      "defensive_benign": 360
+    },
+    "by_harm_label": {
+      "MEDIUM": 720,
+      "LOW": 1080
+    },
+    "by_legit_label": {
+      "HIGH": 1440,
+      "MEDIUM": 360
+    },
+    "by_uncertainty_label": {
+      "CLEAR": 1440,
+      "AMBIGUOUS": 360
+    },
+    "by_action_label": {
+      "SAFE_ANSWER": 720,
+      "ANSWER": 720,
+      "CLARIFY": 360
+    },
+    "num_families": 634
+  }
+}

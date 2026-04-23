@@ -1,0 +1,26 @@
+{
+  "action": {
+    "SAFE_ANSWER": 720,
+    "ANSWER": 720,
+    "CLARIFY": 360
+  },
+  "harm": {
+    "MEDIUM": 720,
+    "LOW": 1080
+  },
+  "legitimacy": {
+    "HIGH": 1440,
+    "MEDIUM": 360
+  },
+  "uncertainty": {
+    "CLEAR": 1440,
+    "AMBIGUOUS": 360
+  },
+  "variant": {
+    "authorized_benign": 360,
+    "hard_benign": 360,
+    "educational_benign": 360,
+    "ambiguous_legitimate": 360,
+    "defensive_benign": 360
+  }
+}

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "efsc"
+version = "0.1.0"
+description = "Efficient Factorized Safety Calibration and QEFSC-FC low-bit deployment experiments."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.1.0",
+  "transformers>=4.45.0",
+  "datasets>=2.20.0",
+  "accelerate>=0.33.0",
+  "peft>=0.12.0",
+  "PyYAML>=6.0.1",
+  "scikit-learn>=1.5.1",
+  "pandas>=2.2.2",
+  "numpy>=1.26.4",
+  "tqdm>=4.66.4",
+  "matplotlib>=3.9.1",
+]
+
+[project.optional-dependencies]
+cuda = [
+  "bitsandbytes>=0.43.0",
+]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["src*", "efsc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

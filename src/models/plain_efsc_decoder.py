@@ -1,0 +1,81 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import torch
+import torch.nn as nn
+from transformers import AutoModelForCausalLM
+
+
+@dataclass
+class PlainEFSCOutput:
+    harm_logits: torch.Tensor
+    legit_logits: torch.Tensor
+    uncertainty_logits: torch.Tensor
+    action_logits: torch.Tensor
+
+
+class PlainEFSCCausalDecoder(nn.Module):
+    def __init__(
+        self,
+        backbone_name: str,
+        bottleneck_dim: int = 128,
+        hidden_dim: int = 256,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.backbone = AutoModelForCausalLM.from_pretrained(backbone_name, trust_remote_code=True)
+        self.hidden_size = int(self.backbone.config.hidden_size)
+        self.proj = nn.Sequential(
+            nn.Linear(self.hidden_size, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, bottleneck_dim),
+        )
+        self.harm_head = self._head(bottleneck_dim, hidden_dim, 3, dropout)
+        self.legit_head = self._head(bottleneck_dim, hidden_dim, 3, dropout)
+        self.uncertainty_head = self._head(bottleneck_dim, hidden_dim, 2, dropout)
+        self.action_head = self._head(bottleneck_dim + 3 + 3 + 2, hidden_dim, 4, dropout)
+
+    def _head(self, in_dim: int, hidden_dim: int, out_dim: int, dropout: float) -> nn.Sequential:
+        return nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, out_dim),
+        )
+
+    def masked_last_token_pool(self, hidden_states: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        lengths = attention_mask.sum(dim=1) - 1
+        lengths = lengths.clamp(min=0)
+        batch_idx = torch.arange(hidden_states.size(0), device=hidden_states.device)
+        return hidden_states[batch_idx, lengths]
+
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> PlainEFSCOutput:
+        outputs = self.backbone(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+            return_dict=True,
+            use_cache=False,
+        )
+        pooled = self.masked_last_token_pool(outputs.hidden_states[-1], attention_mask)
+        z = self.proj(pooled)
+        harm_logits = self.harm_head(z)
+        legit_logits = self.legit_head(z)
+        uncertainty_logits = self.uncertainty_head(z)
+        action_in = torch.cat(
+            [
+                z,
+                torch.softmax(harm_logits, dim=-1),
+                torch.softmax(legit_logits, dim=-1),
+                torch.softmax(uncertainty_logits, dim=-1),
+            ],
+            dim=-1,
+        )
+        return PlainEFSCOutput(
+            harm_logits=harm_logits,
+            legit_logits=legit_logits,
+            uncertainty_logits=uncertainty_logits,
+            action_logits=self.action_head(action_in),
+        )
