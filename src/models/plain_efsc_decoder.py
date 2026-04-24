@@ -51,6 +51,9 @@ class PlainEFSCCausalDecoder(nn.Module):
         batch_idx = torch.arange(hidden_states.size(0), device=hidden_states.device)
         return hidden_states[batch_idx, lengths]
 
+    def _controller_dtype(self) -> torch.dtype:
+        return next(self.proj.parameters()).dtype
+
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> PlainEFSCOutput:
         outputs = self.backbone(
             input_ids=input_ids,
@@ -60,6 +63,7 @@ class PlainEFSCCausalDecoder(nn.Module):
             use_cache=False,
         )
         pooled = self.masked_last_token_pool(outputs.hidden_states[-1], attention_mask)
+        pooled = pooled.to(dtype=self._controller_dtype())
         z = self.proj(pooled)
         harm_logits = self.harm_head(z)
         legit_logits = self.legit_head(z)

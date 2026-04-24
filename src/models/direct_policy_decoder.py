@@ -35,6 +35,9 @@ class DirectPolicyDecoder(nn.Module):
         batch_idx = torch.arange(hidden_states.size(0), device=hidden_states.device)
         return hidden_states[batch_idx, lengths]
 
+    def _controller_dtype(self) -> torch.dtype:
+        return next(self.action_head.parameters()).dtype
+
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> DirectPolicyOutput:
         outputs = self.backbone(
             input_ids=input_ids,
@@ -44,4 +47,5 @@ class DirectPolicyDecoder(nn.Module):
             use_cache=False,
         )
         pooled = self.masked_last_token_pool(outputs.hidden_states[-1], attention_mask)
+        pooled = pooled.to(dtype=self._controller_dtype())
         return DirectPolicyOutput(action_logits=self.action_head(pooled))
