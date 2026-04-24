@@ -7,7 +7,7 @@ from pathlib import Path
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_script", required=True)
-    parser.add_argument("--include_missing", action="store_true")
+    parser.add_argument("--skip_missing", action="store_true")
     args = parser.parse_args()
 
     models = [
@@ -26,8 +26,10 @@ def main() -> None:
     lines = []
     available_datasets = []
     for dataset_name, dataset_path in datasets:
-        if Path(dataset_path).exists() or args.include_missing:
+        if Path(dataset_path).exists() or not args.skip_missing:
             available_datasets.append((dataset_name, dataset_path))
+            if not Path(dataset_path).exists():
+                print(f"Including expected dataset even though file is currently missing: {dataset_path}")
         else:
             print(f"Skipping missing dataset: {dataset_path}")
 

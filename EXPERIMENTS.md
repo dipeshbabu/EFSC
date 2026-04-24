@@ -30,7 +30,7 @@ Purpose: materialize the full frozen dataset set in `data/processed` before gene
 python -m efsc.data.prepare_all --output-dir data/processed --custom-auth data/raw/custom_auth/custom_auth.jsonl
 ```
 
-Purpose: create the active run grid. Missing datasets are skipped unless `--include_missing` is used.
+Purpose: create the active run grid for the full frozen dataset set. Use `--skip_missing` only for smoke runs.
 
 ```bash
 python scripts/make_full_maintrack_run_grid.py --output_script runs/full_maintrack_grid.sh
@@ -65,6 +65,14 @@ Purpose: check missing artifacts after the smoke runs. Use `--fail_on_missing` i
 ```bash
 python scripts/check_maintrack_artifacts.py --grid_script runs/full_maintrack_grid.sh --report outputs/aggregates/artifact_check.json
 ```
+
+The aggregation, significance, qualitative analysis, tables, and plots below use `custom_auth` as the worked example. For final experiments, repeat the same pattern for each dataset in the frozen test set:
+
+- `custom_auth`
+- `xstest`
+- `orbench_hard`
+- `orbench_toxic`
+- `strongreject`
 
 Purpose: aggregate QEFSC-FC FP metrics across three Qwen seeds for custom_auth.
 

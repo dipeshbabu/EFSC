@@ -98,7 +98,7 @@ Purpose: build the full frozen training/validation/test set into `data/processed
 python -m efsc.data.prepare_all --output-dir data/processed --custom-auth data/raw/custom_auth/custom_auth.jsonl
 ```
 
-The current workspace has `test_custom_auth.jsonl`. Any missing test file is skipped by `scripts/make_full_maintrack_run_grid.py` unless `--include_missing` is used. Run the data-prep command above first if you want the full exact experiment surface.
+The current workspace has `test_custom_auth.jsonl`. `scripts/make_full_maintrack_run_grid.py` now targets the full frozen test set by default. Run the data-prep command above first so every expected test file exists. Use `--skip_missing` only for smoke runs.
 
 ## First Experiment Commands
 
@@ -128,7 +128,7 @@ Purpose: optionally add post-quantization recalibration for a baseline when you 
 python run_baseline_quant_experiment.py --run_id qwen25_3b__plain_efsc__seed1 --model_name "Qwen/Qwen2.5-3B-Instruct" --baseline_type plain_efsc --seed 1 --test_path data/processed/test_custom_auth.jsonl --dataset_name custom_auth --quant_mode int4 --use_lora --recalibrate
 ```
 
-Purpose: generate the full active command grid for the frozen test set in `docs/data_manifest.md`. Missing files are skipped unless `--include_missing` is used.
+Purpose: generate the full active command grid for the frozen test set in `docs/data_manifest.md`. Use `--skip_missing` only for smoke runs.
 
 ```bash
 python scripts/make_full_maintrack_run_grid.py --output_script runs/full_maintrack_grid.sh
