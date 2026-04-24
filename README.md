@@ -49,22 +49,29 @@ Purpose: activate the environment.
 source .venv/bin/activate
 ```
 
-Purpose: install EFSC in editable mode with test tools.
+Purpose: install EFSC in editable mode with test tools into the repo venv explicitly.
 
 ```bash
-uv pip install -e ".[dev]"
+uv pip install --python .venv/bin/python -e ".[dev]"
 ```
 
-Purpose: install the CUDA/quantization extra when running INT8/INT4 experiments.
+Purpose: install the CUDA/quantization extra into the same repo venv when running INT8/INT4 experiments.
 
 ```bash
-uv pip install -e ".[dev,cuda]"
+uv pip install --python .venv/bin/python -e ".[dev,cuda]"
+```
+
+Purpose: verify the active interpreter and core packages before running experiments.
+
+```bash
+which python
+python -c "import torch, peft, pytest; print('core ok')"
 ```
 
 Purpose: verify imports and syntax for the active source and script tree.
 
 ```bash
-python -m compileall src scripts
+python -m compileall src scripts efsc
 ```
 
 Purpose: run the fast local unit tests.
