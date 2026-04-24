@@ -24,6 +24,12 @@ Validation model:
 
 Copy commands in order. Each command has its own block.
 
+Purpose: materialize the full frozen dataset set in `data/processed` before generating experiment commands.
+
+```bash
+python -m efsc.data.prepare_all --output-dir data/processed --custom-auth data/raw/custom_auth/custom_auth.jsonl
+```
+
 Purpose: create the active run grid. Missing datasets are skipped unless `--include_missing` is used.
 
 ```bash
@@ -166,7 +172,15 @@ For baselines, `int4_recal` artifacts are produced only when `run_baseline_quant
 
 ## Minimal Paper-Ready Run Set
 
-Run Qwen for all three methods with seeds `1`, `2`, and `3` on `custom_auth`. Add `test_xstest.jsonl` once the file exists. Llama seed 1 is the first scale-validation run; Llama seeds 2 and 3 are useful if compute allows.
+Run Qwen for all three methods with seeds `1`, `2`, and `3` on the full frozen test set:
+
+- `custom_auth`
+- `xstest`
+- `orbench_hard`
+- `orbench_toxic`
+- `strongreject`
+
+Llama seed 1 is the first scale-validation run on the same dataset set; Llama seeds 2 and 3 are useful if compute allows.
 
 ## What To Inspect First
 

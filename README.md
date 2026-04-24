@@ -87,9 +87,18 @@ data/processed/train.jsonl
 data/processed/val.jsonl
 data/processed/test_custom_auth.jsonl
 data/processed/test_xstest.jsonl
+data/processed/test_orbench_hard.jsonl
+data/processed/test_orbench_toxic.jsonl
+data/processed/test_strongreject.jsonl
 ```
 
-The current workspace has `test_custom_auth.jsonl`. If `test_xstest.jsonl` is missing, `scripts/make_full_maintrack_run_grid.py` skips it by default.
+Purpose: build the full frozen training/validation/test set into `data/processed` from the public benchmark sources plus the local custom authorization set.
+
+```bash
+python -m efsc.data.prepare_all --output-dir data/processed --custom-auth data/raw/custom_auth/custom_auth.jsonl
+```
+
+The current workspace has `test_custom_auth.jsonl`. Any missing test file is skipped by `scripts/make_full_maintrack_run_grid.py` unless `--include_missing` is used. Run the data-prep command above first if you want the full exact experiment surface.
 
 ## First Experiment Commands
 
@@ -119,7 +128,7 @@ Purpose: optionally add post-quantization recalibration for a baseline when you 
 python run_baseline_quant_experiment.py --run_id qwen25_3b__plain_efsc__seed1 --model_name "Qwen/Qwen2.5-3B-Instruct" --baseline_type plain_efsc --seed 1 --test_path data/processed/test_custom_auth.jsonl --dataset_name custom_auth --quant_mode int4 --use_lora --recalibrate
 ```
 
-Purpose: generate the full active command grid for available datasets.
+Purpose: generate the full active command grid for the frozen test set in `docs/data_manifest.md`. Missing files are skipped unless `--include_missing` is used.
 
 ```bash
 python scripts/make_full_maintrack_run_grid.py --output_script runs/full_maintrack_grid.sh

@@ -17,6 +17,9 @@ def main() -> None:
     datasets = [
         ("custom_auth", "data/processed/test_custom_auth.jsonl"),
         ("xstest", "data/processed/test_xstest.jsonl"),
+        ("orbench_hard", "data/processed/test_orbench_hard.jsonl"),
+        ("orbench_toxic", "data/processed/test_orbench_toxic.jsonl"),
+        ("strongreject", "data/processed/test_strongreject.jsonl"),
     ]
     seeds = [1, 2, 3]
 
