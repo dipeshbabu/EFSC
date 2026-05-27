@@ -137,6 +137,8 @@ Purpose: generate the full active command grid for the frozen test set in `docs/
 python scripts/make_full_maintrack_run_grid.py --output_script runs/full_maintrack_grid.sh
 ```
 
+The full grid includes recalibrated baselines and a zero-shot prompt-classifier baseline. Use `--no_baseline_recalibration` or `--no_prompt_baseline` only for debugging; those modes are not paper-ready.
+
 Purpose: check which expected outputs from the grid are still missing.
 
 ```bash
@@ -148,5 +150,7 @@ Purpose: run the workshop readiness gate before writing or submitting final clai
 ```bash
 python scripts/build_workshop_readiness_report.py --grid_script runs/full_maintrack_grid.sh --output_root outputs --paper_tex paper/Template-2026/colm2026_conference.tex --output_json outputs/reviewer_readiness/workshop_readiness.json --output_md outputs/reviewer_readiness/workshop_readiness.md --fail_on_not_ready
 ```
+
+The readiness gate now also checks label coverage for `REFUSE`/`HIGH` harmful examples, required comparison methods, baseline recalibration, metric denominators, and quantization-induced bad flip metrics.
 
 See [EXPERIMENTS.md](EXPERIMENTS.md) for aggregation, significance testing, qualitative analysis, tables, and plots.

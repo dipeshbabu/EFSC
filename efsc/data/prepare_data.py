@@ -528,6 +528,22 @@ def build_processed(args: argparse.Namespace) -> Dict[str, int]:
     summary = {"train": len(train_rows), "val": len(val_rows)}
     summary.update({f"test_{name}": len(rows) for name, rows in test_sets.items()})
     save_json(summary, output_dir / "summary.json")
+    from efsc.data.acceptance_checks import run_checks
+
+    acceptance_rows = [*train_rows, *val_rows]
+    for rows in test_sets.values():
+        acceptance_rows.extend(rows)
+    required_actions = [] if args.skip_maintrack_label_gate else ["ANSWER", "SAFE_ANSWER", "CLARIFY", "REFUSE"]
+    required_harm = [] if args.skip_maintrack_label_gate else ["LOW", "MEDIUM", "HIGH"]
+    acceptance_report = run_checks(
+        acceptance_rows,
+        required_actions=required_actions,
+        required_harm_labels=required_harm,
+        min_rows=0 if args.skip_maintrack_label_gate else 1,
+    )
+    save_json(acceptance_report, output_dir / "acceptance_report.json")
+    if not acceptance_report["passed"]:
+        raise RuntimeError(f"Dataset acceptance checks failed; see {output_dir / 'acceptance_report.json'}")
     return summary
 
 
@@ -541,6 +557,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--family-size", type=int, default=6)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--limit-per-source", type=int, default=None, help="Debug limit for smoke tests.")
+    parser.add_argument("--skip-maintrack-label-gate", action="store_true", help="Allow incomplete label coverage for smoke/debug data only.")
 
     parser.add_argument("--wildjailbreak-dataset", default="allenai/wildjailbreak")
     parser.add_argument("--wildjailbreak-config", default="train")

@@ -36,6 +36,12 @@ Purpose: create the active run grid for the full frozen dataset set. Use `--skip
 python scripts/make_full_maintrack_run_grid.py --output_script runs/full_maintrack_grid.sh
 ```
 
+The generated grid now includes:
+
+- QEFSC-FC with FP, INT4, and controller-only recalibration.
+- Plain EFSC and Direct Policy with FP, INT4, and baseline recalibration for a fair repair comparison.
+- A zero-shot prompt-classifier baseline on each backbone as an external, model-prompted comparison.
+
 Purpose: train/evaluate QEFSC-FC on Qwen seed 1, custom_auth, FP plus INT4, then recalibrate the controller after quantization.
 
 ```bash
@@ -58,6 +64,12 @@ Purpose: optional fairness run; add post-quantization recalibration to a baselin
 
 ```bash
 python run_baseline_quant_experiment.py --run_id qwen25_3b__plain_efsc__seed1 --model_name "Qwen/Qwen2.5-3B-Instruct" --baseline_type plain_efsc --seed 1 --test_path data/processed/test_custom_auth.jsonl --dataset_name custom_auth --quant_mode int4 --use_lora --recalibrate
+```
+
+Purpose: run the prompt-only external comparison baseline in FP and INT4.
+
+```bash
+python run_prompt_classifier_experiment.py --run_id qwen25_3b__prompt_classifier__seed1 --model_name "Qwen/Qwen2.5-3B-Instruct" --test_path data/processed/test_custom_auth.jsonl --dataset_name custom_auth --quant_mode int4
 ```
 
 Purpose: check missing artifacts after the smoke runs. Use `--fail_on_missing` in CI or final packaging.
@@ -201,5 +213,6 @@ Llama seed 1 is the first scale-validation run on the same dataset set; Llama se
 1. `safety_utility_score`: QEFSC-FC should beat both baselines.
 2. `quantized_safety_retention`: QEFSC-FC should lose less under INT4.
 3. `quantized_structure_retention`: QEFSC-FC should preserve counterfactual behavior.
-4. Recalibration gain: QEFSC-FC `after` should improve over `before`.
-5. Efficiency: trainable parameter count and peak GPU memory should support the deployment-constrained claim.
+4. Bad flip rates: QEFSC-FC should reduce harmful-to-non-refusal flips and benign-to-refusal flips.
+5. Recalibration gain: QEFSC-FC `after` should improve over `before`, and the gain should remain meaningful against recalibrated baselines.
+6. Efficiency: trainable parameter count and peak GPU memory should support the deployment-constrained claim.

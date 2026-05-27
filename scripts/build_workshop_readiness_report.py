@@ -15,11 +15,26 @@ EXPECTED_DATASETS = {
     "orbench_toxic": "data/processed/test_orbench_toxic.jsonl",
     "strongreject": "data/processed/test_strongreject.jsonl",
 }
-EXPECTED_METHODS = {"qefsc_fc", "plain_efsc", "direct_policy"}
+EXPECTED_METHODS = {"qefsc_fc", "plain_efsc", "direct_policy", "prompt_classifier"}
+EXPECTED_ACTIONS = {"ANSWER", "SAFE_ANSWER", "CLARIFY", "REFUSE"}
+EXPECTED_HARM_LABELS = {"LOW", "MEDIUM", "HIGH"}
+EXPECTED_DATASET_ACTIONS = {
+    "custom_auth": {"ANSWER", "SAFE_ANSWER", "CLARIFY"},
+    "xstest": {"ANSWER"},
+    "orbench_hard": {"SAFE_ANSWER"},
+    "orbench_toxic": {"REFUSE"},
+    "strongreject": {"REFUSE"},
+}
 PRIMARY_METRICS = [
+    "num_examples",
+    "num_harmful",
+    "num_benign",
+    "num_gold_refuse",
     "safety_utility_score",
     "harmful_refusal_rate",
+    "under_refusal_rate",
     "benign_retention_rate",
+    "over_refusal_rate",
     "ambiguity_calibration",
     "macro_f1",
 ]
@@ -28,6 +43,11 @@ RETENTION_METRICS = [
     "quantized_structure_retention",
     "action_agreement",
     "factor_agreement",
+    "action_flip_rate",
+    "bad_action_flip_rate",
+    "harmful_bad_flip_rate",
+    "benign_bad_flip_rate",
+    "safety_utility_delta",
 ]
 EFFICIENCY_METRICS = [
     "num_trainable_params",
@@ -59,6 +79,8 @@ def parse_command(line: str) -> Dict[str, str]:
             idx += 1
     if parsed["script"] == "run_qefsc_quant_experiment.py":
         parsed["method"] = "qefsc_fc"
+    elif parsed["script"] == "run_prompt_classifier_experiment.py":
+        parsed["method"] = "prompt_classifier"
     else:
         parsed["method"] = parsed.get("baseline_type", "")
     return parsed
@@ -85,10 +107,88 @@ def missing_keys(path: Path, keys: Iterable[str]) -> List[str]:
     return [key for key in keys if key not in obj]
 
 
+def load_jsonl(path: Path) -> List[Dict[str, Any]]:
+    rows = []
+    if not path.exists():
+        return rows
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    return rows
+
+
+def label_counts(path: Path) -> Dict[str, Any]:
+    rows = load_jsonl(path)
+    return {
+        "path": str(path),
+        "num_rows": len(rows),
+        "actions": dict(Counter(row.get("gold_action", row.get("action_label", "")) for row in rows)),
+        "harm": dict(Counter(row.get("harm_label", "") for row in rows)),
+    }
+
+
+def build_label_report() -> Dict[str, Any]:
+    split_paths = {
+        "train": Path("data/processed/train.jsonl"),
+        "val": Path("data/processed/val.jsonl"),
+        **{f"test_{name}": Path(path) for name, path in EXPECTED_DATASETS.items()},
+    }
+    by_split = {name: label_counts(path) for name, path in split_paths.items()}
+    train_val_rows = []
+    for split in ("train", "val"):
+        train_val_rows.extend(load_jsonl(split_paths[split]))
+    all_rows = []
+    for path in split_paths.values():
+        all_rows.extend(load_jsonl(path))
+    train_actions = Counter(row.get("gold_action", row.get("action_label", "")) for row in train_val_rows)
+    train_harm = Counter(row.get("harm_label", "") for row in train_val_rows)
+    all_actions = Counter(row.get("gold_action", row.get("action_label", "")) for row in all_rows)
+    all_harm = Counter(row.get("harm_label", "") for row in all_rows)
+
+    warnings = []
+    missing_train_actions = sorted(EXPECTED_ACTIONS - set(train_actions))
+    if missing_train_actions:
+        warnings.append(f"Train/val is missing action labels needed to learn selective refusal: {missing_train_actions}.")
+    missing_train_harm = sorted(EXPECTED_HARM_LABELS - set(train_harm))
+    if missing_train_harm:
+        warnings.append(f"Train/val is missing harm labels needed for factor learning: {missing_train_harm}.")
+    missing_all_actions = sorted(EXPECTED_ACTIONS - set(all_actions))
+    if missing_all_actions:
+        warnings.append(f"Full processed corpus is missing action labels: {missing_all_actions}.")
+    missing_all_harm = sorted(EXPECTED_HARM_LABELS - set(all_harm))
+    if missing_all_harm:
+        warnings.append(f"Full processed corpus is missing harm labels: {missing_all_harm}.")
+    for dataset, required_actions in EXPECTED_DATASET_ACTIONS.items():
+        counts = by_split[f"test_{dataset}"]["actions"]
+        missing = sorted(required_actions - set(counts))
+        if missing:
+            warnings.append(f"Dataset `{dataset}` is missing expected gold actions: {missing}.")
+
+    return {
+        "by_split": by_split,
+        "train_val_actions": dict(train_actions),
+        "train_val_harm": dict(train_harm),
+        "all_actions": dict(all_actions),
+        "all_harm": dict(all_harm),
+        "warnings": warnings,
+    }
+
+
 def expected_run_artifacts(cmd: Dict[str, str], output_root: Path) -> List[Path]:
     run_id = cmd.get("run_id", "")
     dataset = cmd.get("dataset_name", "")
     quant = cmd.get("quant_mode", "int4")
+    if cmd.get("method") == "prompt_classifier":
+        return [
+            output_root / "preds" / f"{run_id}__fp__{dataset}.jsonl",
+            output_root / "preds" / f"{run_id}__{quant}__{dataset}.jsonl",
+            output_root / "metrics" / f"{run_id}__fp__{dataset}.json",
+            output_root / "metrics" / f"{run_id}__{quant}__{dataset}.json",
+            output_root / "retention" / f"{run_id}__{quant}__{dataset}.json",
+            output_root / "efficiency" / f"{run_id}.json",
+        ]
     artifacts = [
         output_root / "models" / run_id / "best.pt",
         output_root / "preds" / f"{run_id}__fp__{dataset}.jsonl",
@@ -104,6 +204,14 @@ def expected_run_artifacts(cmd: Dict[str, str], output_root: Path) -> List[Path]
                 output_root / "metrics" / f"{run_id}__{quant}_recal__{dataset}.json",
                 output_root / "retention" / f"{run_id}__{quant}__before__{dataset}.json",
                 output_root / "retention" / f"{run_id}__{quant}__after__{dataset}.json",
+            ]
+        )
+    elif cmd.get("recalibrate") == "true":
+        artifacts.extend(
+            [
+                output_root / "preds" / f"{run_id}__{quant}_recal__{dataset}.jsonl",
+                output_root / "metrics" / f"{run_id}__{quant}_recal__{dataset}.json",
+                output_root / "retention" / f"{run_id}__{quant}_recal__{dataset}.json",
             ]
         )
     else:
@@ -139,6 +247,7 @@ def build_report(args: argparse.Namespace) -> Dict[str, Any]:
     grid = Path(args.grid_script)
     paper = Path(args.paper_tex)
     commands = read_grid(grid)
+    label_report = build_label_report()
 
     missing_datasets = [
         {"dataset": name, "path": path}
@@ -178,6 +287,17 @@ def build_report(args: argparse.Namespace) -> Dict[str, Any]:
         warnings.append("No run grid commands found.")
     if missing_artifacts:
         warnings.append("Some expected run artifacts are missing.")
+    missing_methods = sorted(EXPECTED_METHODS - {cmd.get("method", "") for cmd in commands})
+    if missing_methods:
+        warnings.append(f"Run grid is missing required top-paper comparison methods: {missing_methods}.")
+    unrecalibrated_baselines = [
+        cmd
+        for cmd in commands
+        if cmd.get("method") in {"plain_efsc", "direct_policy"} and cmd.get("recalibrate") != "true"
+    ]
+    if unrecalibrated_baselines:
+        warnings.append("Baseline grid commands do not all request post-quantization recalibration.")
+    warnings.extend(label_report["warnings"])
     if metric_key_gaps:
         warnings.append("Some metric files lack paper-critical metrics.")
     if retention_key_gaps:
@@ -195,6 +315,7 @@ def build_report(args: argparse.Namespace) -> Dict[str, Any]:
         "output_root": str(output_root),
         "paper_tex": str(paper),
         "grid_summary": summarize_grid(commands),
+        "label_report": label_report,
         "missing_datasets": missing_datasets,
         "missing_artifacts_count": len(missing_artifacts),
         "missing_artifacts_sample": missing_artifacts[:50],
@@ -236,6 +357,9 @@ def render_markdown(report: Dict[str, Any]) -> str:
     if report["missing_datasets"]:
         lines.extend(["", "## Missing Datasets"])
         lines.extend(f"- `{row['dataset']}`: `{row['path']}`" for row in report["missing_datasets"])
+    if report["label_report"]["warnings"]:
+        lines.extend(["", "## Label Coverage Warnings"])
+        lines.extend(f"- {warning}" for warning in report["label_report"]["warnings"])
     if report["missing_artifacts_sample"]:
         lines.extend(["", "## Missing Artifact Sample"])
         lines.extend(f"- `{row['artifact']}`" for row in report["missing_artifacts_sample"])

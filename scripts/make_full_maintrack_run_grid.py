@@ -8,6 +8,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_script", required=True)
     parser.add_argument("--skip_missing", action="store_true")
+    parser.add_argument("--no_prompt_baseline", action="store_true")
+    parser.add_argument("--no_baseline_recalibration", action="store_true")
     args = parser.parse_args()
 
     models = [
@@ -52,6 +54,7 @@ def main() -> None:
             for baseline in ["plain_efsc", "direct_policy"]:
                 b_run_id = f"{model_tag}__{baseline}__seed{seed}"
                 for dataset_name, dataset_path in available_datasets:
+                    recalibration_arg = "" if args.no_baseline_recalibration else " --recalibrate"
                     lines.append(
                         f'python run_baseline_quant_experiment.py '
                         f'--run_id {b_run_id} '
@@ -62,7 +65,19 @@ def main() -> None:
                         f'--dataset_name {dataset_name} '
                         f'--quant_mode int4 '
                         f'--use_lora'
+                        f'{recalibration_arg}'
                     )
+        if not args.no_prompt_baseline:
+            run_id = f"{model_tag}__prompt_classifier__seed1"
+            for dataset_name, dataset_path in available_datasets:
+                lines.append(
+                    f'python run_prompt_classifier_experiment.py '
+                    f'--run_id {run_id} '
+                    f'--model_name "{model_name}" '
+                    f'--test_path {dataset_path} '
+                    f'--dataset_name {dataset_name} '
+                    f'--quant_mode int4'
+                )
 
     out = Path(args.output_script)
     out.parent.mkdir(parents=True, exist_ok=True)
