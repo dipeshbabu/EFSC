@@ -66,6 +66,12 @@ Purpose: check missing artifacts after the smoke runs. Use `--fail_on_missing` i
 python scripts/check_maintrack_artifacts.py --grid_script runs/full_maintrack_grid.sh --report outputs/aggregates/artifact_check.json
 ```
 
+Purpose: run the COLM workshop readiness gate. This checks dataset coverage, expected artifacts, metric keys, retention keys, efficiency keys, and paper result cells.
+
+```bash
+python scripts/build_workshop_readiness_report.py --grid_script runs/full_maintrack_grid.sh --output_root outputs --paper_tex paper/Template-2026/colm2026_conference.tex --output_json outputs/reviewer_readiness/workshop_readiness.json --output_md outputs/reviewer_readiness/workshop_readiness.md --fail_on_not_ready
+```
+
 The aggregation, significance, qualitative analysis, tables, and plots below use `custom_auth` as the worked example. For final experiments, repeat the same pattern for each dataset in the frozen test set:
 
 - `custom_auth`

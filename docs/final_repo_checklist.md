@@ -57,6 +57,8 @@
 - `scripts/select_best_checkpoint.py` selects best metric files by validation metric.
 - `scripts/build_final_paper_bundle.py` collects tables, figures, and analysis JSONs into `outputs/paper_bundle`.
 - `runs/run_all.sh` can be regenerated from the registry with `scripts/launch_multiseed.py`.
+- `scripts/build_workshop_readiness_report.py` checks COLM readiness across data, artifacts, metric keys, retention keys, efficiency keys, and remaining empty result cells.
+- `paper/Template-2026/` is the local COLM manuscript workspace and is ignored by Git.
 
 ## Main-Track Evaluation And Ablations
 

@@ -18,13 +18,14 @@ scripts/
   data prep, evaluation, retention, statistics, tables, plots, artifact checks
 
 docs/
-  architecture, data manifest, labeling, reproducibility
+  architecture, data manifest, labeling, reproducibility, result templates
 
 efsc/
   dataset preparation helpers retained for compatibility with preprocessing scripts
 ```
 
 The active experiment entrypoints are the root-level QEFSC and baseline runners. The original factorized EFSC formulation is retained as the `plain_efsc` baseline rather than as the main proposed method.
+The workshop manuscript lives locally under `paper/Template-2026/` and is intentionally ignored by Git. Keep tracked code, data manifests, runbooks, and reproducibility checks in the repository; keep submission drafts and template assets local unless explicitly requested.
 
 ## Key Docs
 
@@ -32,6 +33,8 @@ The active experiment entrypoints are the root-level QEFSC and baseline runners.
 - Full runbook: [EXPERIMENTS.md](EXPERIMENTS.md)
 - Data manifest: [docs/data_manifest.md](docs/data_manifest.md)
 - Labeling guide: [docs/labeling_guidelines.md](docs/labeling_guidelines.md)
+- Reproducibility checklist: [docs/reproducibility_checklist.md](docs/reproducibility_checklist.md)
+- Final repo checklist: [docs/final_repo_checklist.md](docs/final_repo_checklist.md)
 
 ## Setup
 
@@ -138,6 +141,12 @@ Purpose: check which expected outputs from the grid are still missing.
 
 ```bash
 python scripts/check_maintrack_artifacts.py --grid_script runs/full_maintrack_grid.sh --report outputs/aggregates/artifact_check.json
+```
+
+Purpose: run the workshop readiness gate before writing or submitting final claims.
+
+```bash
+python scripts/build_workshop_readiness_report.py --grid_script runs/full_maintrack_grid.sh --output_root outputs --paper_tex paper/Template-2026/colm2026_conference.tex --output_json outputs/reviewer_readiness/workshop_readiness.json --output_md outputs/reviewer_readiness/workshop_readiness.md --fail_on_not_ready
 ```
 
 See [EXPERIMENTS.md](EXPERIMENTS.md) for aggregation, significance testing, qualitative analysis, tables, and plots.

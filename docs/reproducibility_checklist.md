@@ -21,3 +21,5 @@ Before reporting:
 - Run `scripts/statistical_significance.py` for primary method comparisons.
 - Run `scripts/qualitative_error_analysis.py` for appendix examples.
 - Generate LaTeX tables and plots using the commands in `EXPERIMENTS.md`.
+- Run `scripts/build_workshop_readiness_report.py --fail_on_not_ready` before making final COLM workshop claims.
+- Keep the COLM manuscript and template assets under local ignored `paper/Template-2026/` unless paper contents are explicitly requested for version control.
