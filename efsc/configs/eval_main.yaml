@@ -1,0 +1,10 @@
+model_name: distilroberta-base
+test_path: sample_data/test.jsonl
+output_dir: outputs/eval_main
+seed: 42
+device: cpu
+freeze_backbone: true
+bottleneck_dim: 128
+batch_size: 4
+max_length: 256
+checkpoint: outputs/stage3/stage3_last.pt

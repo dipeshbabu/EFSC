@@ -1,0 +1,12 @@
+model_name: distilroberta-base
+train_path: sample_data/train.jsonl
+val_path: sample_data/val.jsonl
+output_dir: outputs/baseline_direct_classifier
+seed: 42
+device: cpu
+freeze_backbone: true
+max_length: 256
+batch_size: 4
+eval_batch_size: 4
+epochs: 2
+learning_rate: 0.0002

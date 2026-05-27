@@ -1,0 +1,8 @@
+model_name: distilroberta-base
+train_path: sample_data/train.jsonl
+output_dir: outputs/baseline_lora
+seed: 42
+device: cpu
+max_length: 256
+epochs: 1
+learning_rate: 0.0001

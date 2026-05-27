@@ -1,0 +1,2 @@
+test_path: sample_data/test.jsonl
+output_dir: outputs/baseline_prompting

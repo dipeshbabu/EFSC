@@ -1,0 +1,21 @@
+model_name: distilroberta-base
+train_path: sample_data/train.jsonl
+val_path: sample_data/val.jsonl
+output_dir: outputs/stage1
+seed: 42
+device: cpu
+freeze_backbone: true
+bottleneck_dim: 128
+action_hidden_dim: 128
+max_length: 256
+batch_size: 4
+eval_batch_size: 4
+epochs: 2
+learning_rate: 0.0002
+weight_decay: 0.01
+warmup_ratio: 0.1
+max_grad_norm: 1.0
+loss_weights:
+  harm: 1.0
+  legit: 1.0
+  uncertainty: 1.0
