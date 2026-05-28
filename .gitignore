@@ -21,11 +21,8 @@ env/
 outputs/
 paper/
 sample_data/
-data/processed/test_xstest.jsonl
-data/processed/test_orbench.jsonl
-data/processed/test_orbench_hard.jsonl
-data/processed/test_orbench_toxic.jsonl
-data/processed/test_strongreject.jsonl
+data/processed/
+data/manifests/
 *.pt
 *.pth
 *.safetensors
